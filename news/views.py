@@ -5,6 +5,15 @@ from news.models import News, Comments
 from news.serializers import NewsDetailSerializer, NewsListSerializer, CommentsSerializer
 
 # Method GET, POST, PUT, PATCH, DELETE
+# API - Application Programming Interface
+# REST API - REpresentational State Transfer API
+# JSON - JavaScript Object Notation
+# ORM - Object Relational Mapping
+
+# snake_case: hello_world: function, variable, method
+# CamelCase: HelloWorld: class
+# OverFetch - перезапрос данных
+# UnderFetch - недостаточно данных
 
 @api_view(['GET'])
 def hello_world(request):
@@ -22,26 +31,15 @@ def hello_world(request):
 
 @api_view(['GET'])
 def get_news(request):
-    # SELECT * FROM news_news;
-    # ORM - Object Relational Mapping
-    # news = News.objects.all() # QuerySet
-    # news_list = []
-    # for i in news:
-    #     news_list.append(
-    #         {
-    #             "id": i.id,
-    #             "title": i.title,
-    #             "content": i.content,
-    #             "is_active": i.is_active,
-    #             "view_count": i.view_count,
-    #             "created_at": i.created_at,
-    #             "updated_at": i.updated_at,
-    #         }
-    #     )
-
-    news = News.objects.all() # QuerySet
+    news = News.objects.all() \
+        .select_related('category') \
+        .prefetch_related('tag', 'comments')
     
-    serializer = NewsListSerializer(news, many=True)
+    search = request.query_params.get('search', None)
+    if search is not None:
+        news = news.filter(title__icontains=search)
+    
+    serializer = NewsDetailSerializer(instance=news, many=True)
 
     return Response(serializer.data)
 
@@ -54,7 +52,7 @@ def get_news_by_id(request, news_id):
     except News.DoesNotExist:
         return Response({f"Новость с id {news_id} не существует"}, status=404)
 
-    serializer = NewsDetailSerializer(news, many=False)
+    serializer = NewsDetailSerializer(instance=news, many=False)
 
     return Response(serializer.data)
 
