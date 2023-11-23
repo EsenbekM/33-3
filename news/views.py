@@ -2,7 +2,7 @@ from rest_framework.decorators import api_view
 from rest_framework.response import Response
 
 from news.models import News, Comments, Category
-from news.serializers import NewsDetailSerializer, NewsListSerializer, CommentsSerializer
+from news.serializers import NewsDetailSerializer, NewsListSerializer, CommentsSerializer, NewsValidateSerializer
 
 # Method GET, POST, PUT, PATCH, DELETE
 # API - Application Programming Interface
@@ -45,26 +45,10 @@ def get_news(request):
         return Response(serializer.data)
     
     elif request.method == 'POST':
-        title = request.data.get('title')
-        content = request.data.get('content')
-        category_id = request.data.get('category_id')
-        tags = request.data.get('tags', [])
-
-        news = News.objects.create(
-            title=title,
-            content=content,
-            category_id=category_id,
-        )
-
-        # 1
-        news.tag.set(tags)
-
-        # 2    
-        # news.tag.add(2, 4, 5, 6)
-
-        # 3
-        # news.tag.add(*tags)
-
+        serializer = NewsValidateSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        news = serializer.save()
+        
         serializer = NewsDetailSerializer(instance=news, many=False)
 
         return Response(
@@ -89,14 +73,9 @@ def get_news_by_id(request, news_id):
         return Response(serializer.data)
 
     if request.method == 'PUT':
-        news.title = request.data.get('title', news.title)
-        news.content = request.data.get('content', news.content)
-        news.category_id = request.data.get('category_id', news.category_id)
-
-        tags = request.data.get('tags', news.tag.all())
-        news.tag.set(tags)
-
-        news.save()
+        serializer = NewsValidateSerializer(instance=news, data=request.data)
+        serializer.is_valid(raise_exception=True)
+        news = serializer.update(instance=news, validated_data=serializer.validated_data)
 
         serializer = NewsDetailSerializer(instance=news, many=False)
         
