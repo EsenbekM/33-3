@@ -4,7 +4,7 @@ from users import views
 
 
 urlpatterns = [
-    path('login/', views.login),
+    path('login/', views.LoginAPIView.as_view()),
     path('logout/', views.logout),
     path('register/', views.register),
     path('profile/', views.profile),

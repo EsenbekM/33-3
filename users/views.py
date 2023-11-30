@@ -4,6 +4,7 @@ from django.contrib.auth import authenticate
 from rest_framework.permissions import IsAuthenticated, IsAdminUser, AllowAny
 from rest_framework.response import Response
 from rest_framework.authtoken.models import Token
+from rest_framework.generics import GenericAPIView
 
 from users.serializers import UserLoginSerializer, UserRegisterSerializer, UserProfilesSerializer
 
@@ -31,33 +32,42 @@ def register(request):
         }  
     )
 
+
+class LoginAPIView(GenericAPIView):
+    serializer_class = UserLoginSerializer
+
+    def post(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        user = authenticate(**serializer.validated_data) 
+        
+        if user:
+            if not user.is_active:
+                return Response({'error': 'User is not active!'})
+            token, created = Token.objects.get_or_create(user=user) # (token, True) or (token, False)
+
+            return Response(
+                {
+                    'token': token.key,
+                    'username': user.username,
+                    'email': user.email,
+                }
+            )
+
+        return Response({'error': 'Wrong credentials!'})
+
+
 @api_view(['POST'])
 def login(request):
-    # 0 - validate data
     serializer = UserLoginSerializer(data=request.data)
     serializer.is_valid(raise_exception=True)
-
-    # 1 - получить данные из запроса
-    # username = serializer.validated_data.get('username', None)
-    # password = serializer.validated_data.get('password', None)
-
-    # serializer.validated_data -> dict
-    # {
-    #    'username': 'admin',
-    #    'password': 'admin'
-    # }
-
-    # 2 - найти пользователя в базе данных
-    user = authenticate(**serializer.validated_data) # User | None
+    user = authenticate(**serializer.validated_data) 
     
     if user:
         if not user.is_active:
             return Response({'error': 'User is not active!'})
-        
-        # 3 - если пользователь найден, то создать токен
         token, created = Token.objects.get_or_create(user=user) # (token, True) or (token, False)
 
-        # 4 - вернуть токен
         return Response(
             {
                 'token': token.key,

@@ -2,20 +2,41 @@ from rest_framework.decorators import api_view, permission_classes
 from rest_framework.response import Response
 from django.contrib.auth.models import User
 from rest_framework.permissions import IsAuthenticated, IsAdminUser, AllowAny
+from rest_framework.generics import GenericAPIView, ListCreateAPIView,  RetrieveUpdateDestroyAPIView
+from rest_framework.filters import SearchFilter, OrderingFilter
+from rest_framework.pagination import PageNumberPagination
+from rest_framework.viewsets import ModelViewSet
+from rest_framework.mixins import CreateModelMixin, RetrieveModelMixin, UpdateModelMixin, DestroyModelMixin
+from rest_framework.viewsets import GenericViewSet
 
-from news.models import News, Comments, Category
-from news.serializers import NewsDetailSerializer, NewsListSerializer, CommentsSerializer, NewsValidateSerializer
+from rest_framework.mixins import ListModelMixin
+from news.models import News, Comments, Category, Tag
+from news.serializers import CategorySerializer, NewsDetailSerializer, NewsListSerializer, CommentsSerializer, NewsValidateSerializer, TagSerializer
 
-# Method GET, POST, PUT, PATCH, DELETE
-# API - Application Programming Interface
-# REST API - REpresentational State Transfer API
-# JSON - JavaScript Object Notation
-# ORM - Object Relational Mapping
 
-# snake_case: hello_world: function, variable, method
-# CamelCase: HelloWorld: class
-# OverFetch - перезапрос данных
-# UnderFetch - недостаточно данных
+
+class TagViewSet(ModelViewSet):
+    queryset = Tag.objects.all()
+    serializer_class = TagSerializer
+    lookup_field = 'id'
+
+
+class CategoryListCreateAPIView(ListCreateAPIView):
+    queryset = Category.objects.all()
+    serializer_class = CategorySerializer
+    pagination_class = None
+    # filter_backends = [SearchFilter, OrderingFilter]
+    # search_fields = ['title']
+    # ordering_fields = ['title', 'id']
+    # permission_classes = [IsAuthenticated]
+    # pagination_class = PageNumberPagination
+
+
+class CategoryRetrieveUpdateDestroyAPIView(RetrieveUpdateDestroyAPIView):
+    queryset = Category.objects.all()
+    serializer_class = CategorySerializer
+    lookup_field = 'id'
+
 
 @api_view(['GET'])
 def hello_world(request):
