@@ -1,21 +1,22 @@
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.response import Response
-from django.contrib.auth.models import User
-from rest_framework.permissions import IsAuthenticated, IsAdminUser, AllowAny
-from rest_framework.generics import GenericAPIView, ListCreateAPIView,  RetrieveUpdateDestroyAPIView
-from rest_framework.filters import SearchFilter, OrderingFilter
-from rest_framework.pagination import PageNumberPagination
+from rest_framework.permissions import IsAuthenticated
+from rest_framework.generics import ListCreateAPIView,  RetrieveUpdateDestroyAPIView
 from rest_framework.viewsets import ModelViewSet
-from rest_framework.mixins import CreateModelMixin, RetrieveModelMixin, UpdateModelMixin, DestroyModelMixin
-from rest_framework.viewsets import GenericViewSet
 
-from rest_framework.mixins import ListModelMixin
 from news.models import News, Comments, Category, Tag
-from news.serializers import CategorySerializer, NewsDetailSerializer, NewsListSerializer, CommentsSerializer, NewsValidateSerializer, TagSerializer
+from news.service import NewsService
+from news.serializers import CategorySerializer, NewsDetailSerializer, CommentsSerializer, NewsValidateSerializer, TagSerializer
 
+# 1. Function Based Views
+# 2. Class Based Views (GenericAPIView) + Mixins
+# 3. ViewSets (ModelViewSet, GenericViewSet)
 
 
 class TagViewSet(ModelViewSet):
+    '''
+    CRUD для тегов
+    '''
     queryset = Tag.objects.all()
     serializer_class = TagSerializer
     lookup_field = 'id'
@@ -25,11 +26,6 @@ class CategoryListCreateAPIView(ListCreateAPIView):
     queryset = Category.objects.all()
     serializer_class = CategorySerializer
     pagination_class = None
-    # filter_backends = [SearchFilter, OrderingFilter]
-    # search_fields = ['title']
-    # ordering_fields = ['title', 'id']
-    # permission_classes = [IsAuthenticated]
-    # pagination_class = PageNumberPagination
 
 
 class CategoryRetrieveUpdateDestroyAPIView(RetrieveUpdateDestroyAPIView):
@@ -57,7 +53,7 @@ def hello_world(request):
 def get_news(request):
     if request.method == 'GET':
         # print(request.user)
-        news = News.objects.all() \
+        news = NewsService.get_all() \
             .select_related('category') \
             .prefetch_related('tag', 'comments')
         
@@ -130,3 +126,4 @@ def comments_list(request):
     serializer = CommentsSerializer(comments, many=True)
     # 3. Отправить ответ
     return Response(serializer.data)
+

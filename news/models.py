@@ -1,7 +1,16 @@
 from django.db import models
 
 
-class Category(models.Model):
+class BaseModel(models.Model):
+    created_at = models.DateTimeField(auto_now_add=True, verbose_name='Дата создания')
+    updated_at = models.DateTimeField(auto_now=True, verbose_name='Дата обновления')
+    is_deleted = models.BooleanField(default=False, verbose_name='Удалена')
+
+    class Meta:
+        abstract = True
+
+
+class Category(BaseModel):
     title = models.CharField(max_length=150, verbose_name='Название категории')
 
     def __str__(self):
@@ -12,7 +21,7 @@ class Category(models.Model):
         verbose_name_plural = 'Категории'
 
 
-class Tag(models.Model):
+class Tag(BaseModel):
     title = models.CharField(max_length=150, verbose_name='Название тега')
 
     def __str__(self):
